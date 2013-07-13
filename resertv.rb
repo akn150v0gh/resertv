@@ -115,35 +115,59 @@ cgi = CGI.new
 
 if cgi.request_method == 'POST'
 
-  data = "dtvopen #{config[:password]} #{cgi['date']} " +
-    "#{cgi['start']} #{cgi['stop']} #{cgi['channel']} " +
-    "#{cgi['recorder']} #{cgi['multiplex']}"
-  mailbody = "From: #{config[:from]}\n" +
-    "To: #{config[:to]}\n" +
-    "Cc: #{config[:from]}\n" +
-    "Subject: recording reservation\n" +
-    "\n" +
-    "#{data}\n"
-  Net::SMTP.start(config[:smtp_host], config[:smtp_port]) {|smtp|
-      smtp.send_mail(mailbody, config[:from],
-        [config[:to], config[:from]])
-  }
+  if cgi['date'] =~ /^\d{8}$/ &&
+    cgi['start'] =~ /^\d{4}$/ && cgi['stop'] =~ /^\d{4}$/ &&
+    cgi['start'].to_i < cgi['stop'].to_i
 
-  html = <<-_END
-    <!DOCTYPE html>
-    <html lang="ja">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>録画予約</title>
-    </head>
-    <body>
-      <h1>録画予約</h1>
-      <p>録画予約を送信しました</p>
-      <p><a href="resertv.rb">戻る</a></p>
-    </body>
-    </html>
-  _END
+    data = "dtvopen #{config[:password]} #{cgi['date']} " +
+      "#{cgi['start']} #{cgi['stop']} #{cgi['channel']} " +
+      "#{cgi['recorder']} #{cgi['multiplex']}"
+    mailbody = "From: #{config[:from]}\n" +
+      "To: #{config[:to]}\n" +
+      "Cc: #{config[:from]}\n" +
+      "Subject: recording reservation\n" +
+      "\n" +
+      "#{data}\n"
+    Net::SMTP.start(config[:smtp_host], config[:smtp_port]) {|smtp|
+        smtp.send_mail(mailbody, config[:from],
+          [config[:to], config[:from]])
+    }
+
+    html = <<-_END
+      <!DOCTYPE html>
+      <html lang="ja">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>録画予約</title>
+      </head>
+      <body>
+        <h1>録画予約</h1>
+        <p>録画予約を送信しました</p>
+        <p><a href="resertv.rb">戻る</a></p>
+      </body>
+      </html>
+    _END
+
+  else
+
+    html = <<-_END
+      <!DOCTYPE html>
+      <html lang="ja">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>録画予約</title>
+      </head>
+      <body>
+        <h1>エラー</h1>
+        <p>日時指定に問題があります。</p>
+        <p><a href="resertv.rb">戻る</a></p>
+      </body>
+      </html>
+    _END
+
+  end
 
 else
 
@@ -163,27 +187,27 @@ else
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>録画予約</title>
-    </head>
-    <body>
-      <h1>録画予約</h1>
-      <form method="post" action="resertv.rb">
-        <input type="hidden" name="recorder" value="#{config[:recorder]}">
-        <input type="hidden" name="multiplex" value="#{config[:multiplex]}">
-        日付：<input type="text" name="date" size="10" maxlength="8"
-        istyle="4" mode="numeric" value="#{day}"><br>
-        時刻：<input type="text" name="start" size="5" maxlength="4"
-        istyle="4" mode="numeric" value="#{start}">
-        〜 <input type="text" name="stop" size="5" maxlength="4"
-        istyle="4" mode="numeric" value="#{stop}"><br>
-        チャンネル：
-        <select name="channel">
-          #{channels_select}
-        </select>
-        <br>
-        <input type="submit" value="予約">
-      </form>
-    </body>
-    </html>
+  </head>
+  <body>
+    <h1>録画予約</h1>
+    <form method="post" action="resertv.rb">
+      <input type="hidden" name="recorder" value="#{config[:recorder]}">
+      <input type="hidden" name="multiplex" value="#{config[:multiplex]}">
+      日付：<input type="text" name="date" size="10" maxlength="8"
+      istyle="4" mode="numeric" value="#{day}"><br>
+      時刻：<input type="text" name="start" size="5" maxlength="4"
+      istyle="4" mode="numeric" value="#{start}">
+      〜 <input type="text" name="stop" size="5" maxlength="4"
+      istyle="4" mode="numeric" value="#{stop}"><br>
+      チャンネル：
+      <select name="channel">
+        #{channels_select}
+      </select>
+      <br>
+      <input type="submit" value="予約">
+    </form>
+  </body>
+  </html>
   _END
 
 end
